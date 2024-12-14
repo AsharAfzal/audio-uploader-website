@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import sanityClient from '../sanity/lib/client';
-import { getAudioFiles } from '@/sanity/lib/queries';
+import sanityClient from '@/app/sanity/lib/client';
+import { getAudioFiles } from '@/app/sanity/lib/queries';
 
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
