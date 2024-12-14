@@ -4,12 +4,16 @@ import { useEffect, useState } from 'react';
 import sanityClient from '@/app/sanity/lib/client';
 import { getAudioFiles } from '@/app/sanity/lib/queries';
 
+type AudioFile = {
+  title: string;
+  description: string;
+  audioUrl: string;
+};
+
 export default function Home() {
   const [file, setFile] = useState<File | null>(null);
-  const [uploadedFilePath, setUploadedFilePath] = useState<string>("");
-  const [audioFiles, setAudioFiles] = useState<any[]>([]); // To store fetched audio files
+  const [audioFiles, setAudioFiles] = useState<AudioFile[]>([]); // Updated type
 
-  // Fetch all existing audio files on mount
   useEffect(() => {
     async function fetchData() {
       const data = await getAudioFiles();
@@ -18,14 +22,12 @@ export default function Home() {
     fetchData();
   }, []);
 
-  // Handle file input change
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       setFile(event.target.files[0]);
     }
   };
 
-  // Handle file upload to Sanity
   const handleUpload = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -35,16 +37,14 @@ export default function Home() {
     }
 
     try {
-      // Step 1: Upload the file to Sanity
       const fileAsset = await sanityClient.assets.upload("file", file, {
         filename: file.name,
       });
 
-      // Step 2: Create a new document in the `audioUploader` schema
       const audioDoc = {
         _type: "audioUploader",
-        title: file.name.split(".")[0], // Use the file name as the title
-        description: "Uploaded via frontend", // Add a default description
+        title: file.name.split(".")[0],
+        description: "Uploaded via frontend",
         audioFile: {
           _type: "file",
           asset: {
@@ -56,14 +56,9 @@ export default function Home() {
 
       await sanityClient.create(audioDoc);
 
-      // Step 3: Set the uploaded file's URL and refresh the audio list
-      setUploadedFilePath(fileAsset.url);
-
-      // Fetch the updated audio files
       const updatedAudioFiles = await getAudioFiles();
       setAudioFiles(updatedAudioFiles);
 
-      // Reset the file input
       setFile(null);
     } catch (error) {
       console.error("Error uploading file to Sanity:", error);
@@ -74,7 +69,6 @@ export default function Home() {
     <main className="flex flex-col items-center min-h-screen bg-gray-100 p-6">
       <h1 className="text-3xl font-bold mb-6">Upload and Manage Audio Files</h1>
 
-      {/* Form to upload a new file */}
       <form
         className="flex flex-col items-center bg-white p-6 rounded-lg shadow-md mb-6"
         onSubmit={handleUpload}
@@ -93,7 +87,6 @@ export default function Home() {
         </button>
       </form>
 
-      {/* Show uploaded audio files */}
       <div className="w-full max-w-2xl">
         <h2 className="text-2xl font-bold mb-4">Uploaded Audio Files</h2>
         {audioFiles.length > 0 ? (
